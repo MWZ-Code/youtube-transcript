@@ -36,6 +36,14 @@ export class YoutubeTranscriptVideoUnavailableError extends YoutubeTranscriptErr
   }
 }
 
+export class YoutubeTranscriptLoginRequiredError extends YoutubeTranscriptError {
+  constructor(videoId: string) {
+    super(
+      `YouTube requires login to access this video (${videoId}). This usually means the requesting IP is rate-limited or flagged (common on VPN/datacenter IPs) — captions may still exist. Retry from a different IP.`,
+    );
+  }
+}
+
 export class YoutubeTranscriptDisabledError extends YoutubeTranscriptError {
   constructor(videoId: string) {
     super(`Transcript is disabled on this video (${videoId})`);
@@ -162,6 +170,11 @@ export class YoutubeTranscript {
       videoPageBody,
       'ytInitialPlayerResponse',
     );
+
+    if (playerResponse?.playabilityStatus?.status === 'LOGIN_REQUIRED') {
+      throw new YoutubeTranscriptLoginRequiredError(originalVideoId);
+    }
+
     const captionTracks =
       playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
 
